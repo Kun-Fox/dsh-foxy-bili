@@ -112,7 +112,7 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 
 私聊推送支持两条通道，可以单独开，也可以同时开：
 
-- **QQ 私聊**：需要 Koishi 侧安装并启用 `koishi-plugin-foxy-memory-bridge@0.1.15+`，并让 DSH 的 `dsh-foxy-memory` 指向同一个桥。插件会读取 `~/.dsh/foxy/settings.json` 的 `bridgeUrl` 和 `bridgeToken`，调用 `POST <bridgeUrl>/send-private`。
+- **QQ 私聊**：需要 Koishi 侧安装并启用 `koishi-plugin-foxy-memory-bridge@0.1.16+`，并让 DSH 的 `dsh-foxy-memory` 指向同一个桥。插件会读取 `~/.dsh/foxy/settings.json` 的 `bridgeUrl` 和 `bridgeToken`，调用 `POST <bridgeUrl>/send-private`。
 - **B站私聊**：直接使用当前扫码登录的 B 站 Cookie，调用网页私信接口。只有接口返回 `msg_key`（投递回执）才算成功；没有回执通常是对方不收陌生人私信或触发风控。
 
 模型必须同时给出 `dm: true` 和 `dmText`；`skip` 的视频不会推送。发送成功后，插件再写一条 `scene: "private"` 的记忆，内容类似“我在 QQ 私聊/B站私聊里，把刷到的视频发给了主人……”。
