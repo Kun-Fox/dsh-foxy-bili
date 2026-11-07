@@ -38,7 +38,8 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 - **浏览模式**：启用自动浏览、浏览间隔、每轮浏览数量、兴趣关键词、兴趣分区、评论模式、每日评论上限；
 - **评论功能**：默认提及账号、提及白名单、回复他人评论、楼中楼回复、立即评论一次；
 - **私聊推送**：QQ 私聊 / B站私聊开关与对象；推送内容会同时写入私聊记忆；
-- **运行与日志**：立即运行、保存设置、上轮统计与逐条浏览记录；
+- **评论回复**：检查「回复我的」「@我的」，查看原视频后回复；可配置间隔和每轮最多回复；
+- **运行与日志**：立即运行、立即检查评论通知、保存设置、上轮统计与逐条浏览记录；
 - **记忆与启动**：写入 Foxy 记忆、启动 DSH 后自动运行。
 
 ### 扫码登录
@@ -85,6 +86,9 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 | `interestCategories` | `[]` | 只浏览命中的分区（`tname`）；空数组不筛选 |
 | `commentMode` | `off` | `off` / `auto` |
 | `maxCommentsPerDay` | `1` | 每天最多评论几条，0–10 |
+| `replyInbox` | `false` | 是否检查「回复我的」「@我的」 |
+| `replyIntervalMinutes` | `10` | 通知检查间隔，2–1440 分钟 |
+| `maxRepliesPerRun` | `1` | 每轮最多回复几条，1–5 |
 | `enableMemory` | `true` | 是否写 Foxy 记忆 |
 | `memoryPresetId` | `foxy3（Character）` | 记忆池 |
 | `mentionOwner` | `true` | 评论是否默认 @ 主人 |

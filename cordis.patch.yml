@@ -18,6 +18,9 @@
         interestCategories: []
         commentMode: 'off'
         maxCommentsPerDay: 1
+        replyInbox: false
+        replyIntervalMinutes: 10
+        maxRepliesPerRun: 1
         enableMemory: true
         memoryPresetId: 'foxy3（Character）'
         mentionOwner: true

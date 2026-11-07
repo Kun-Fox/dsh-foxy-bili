@@ -2,6 +2,7 @@ const assert = require('node:assert/strict')
 
 async function main() {
   const bili = await import('../lib/bili.js')
+  const index = await import('../lib/index.js')
   const interest = await import('../lib/interest.js')
   const judge = await import('../lib/judge.js')
   const login = await import('../lib/login.js')
@@ -52,6 +53,8 @@ async function main() {
     llmApiKey: ' sk-secret ',
     interestKeywords: ' 编程, 游戏，编程\n',
     interestCategories: [' 科技 ', '科技'],
+    replyIntervalMinutes: 1,
+    maxRepliesPerRun: 99,
   })
   assert.equal(normalized.enabled, false)
   assert.equal(normalized.intervalMinutes, 10)
@@ -75,6 +78,9 @@ async function main() {
   assert.equal(normalized.llmApiKey, 'sk-secret')
   assert.deepEqual(normalized.interestKeywords, ['编程', '游戏'])
   assert.deepEqual(normalized.interestCategories, ['科技'])
+  assert.equal(normalized.replyInbox, false)
+  assert.equal(normalized.replyIntervalMinutes, 2)
+  assert.equal(normalized.maxRepliesPerRun, 5)
   assert.equal(
     interest.matchesInterest(
       { title: '一个编程视频', desc: '', tname: '科技' },
@@ -105,6 +111,61 @@ async function main() {
   assert.equal(publicSettings.llmApiKey, undefined)
   assert.equal(publicSettings.llmApiKeySet, true)
   assert.equal(publicSettings.mentionWhitelist.length, 2)
+
+  const inbox = index.inboxItemsFrom(
+    [
+      {
+        id: 1001,
+        reply_time: 200,
+        user: { mid: 82588812, nickname: '主人' },
+        item: {
+          business_id: 1,
+          subject_id: 117565317715732,
+          root_id: 319512915089,
+          source_id: 323265024992,
+          target_id: 319512915089,
+          title: '测试视频',
+          source_content: '你上次说的那个。',
+          root_reply_content: 'Foxy 的原评论',
+        },
+      },
+      {
+        id: 1002,
+        reply_time: 100,
+        user: { mid: 1, nickname: '动态用户' },
+        item: { business_id: 11, subject_id: 1, source_id: 2 },
+      },
+    ],
+    [
+      {
+        id: 1003,
+        reply_time: 300,
+        user: { mid: 2, nickname: '@我的人' },
+        item: {
+          business_id: 1,
+          subject_id: 117549631019560,
+          root_id: 0,
+          source_id: 322954523360,
+          title: '另一个视频',
+          source_content: '@Ai_Foxy 来看看',
+        },
+      },
+    ],
+  )
+  assert.equal(inbox.length, 2)
+  assert.equal(inbox[0].aid, '117549631019560')
+  assert.equal(inbox[0].root, '322954523360')
+  assert.equal(inbox[0].parent, '322954523360')
+  assert.equal(inbox[1].rpid, '323265024992')
+  assert.match(inbox[1].rootText, /原评论/)
+  assert.match(index.inboxReplyMessage({}, inbox[0], { comment: '来了。' }), /@我的人 来了。/)
+  assert.equal(
+    index.inboxItemsFrom(
+      [{ id: 1, item: { business_id: 1, subject_id: 1, source_id: 2 } }],
+      [{ id: 1, item: { business_id: 1, subject_id: 1, source_id: 2 } }],
+    ).length,
+    1,
+  )
 
   const previousFetch = global.fetch
   let dmRequest
