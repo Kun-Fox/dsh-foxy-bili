@@ -14,6 +14,8 @@
         ownerName: ''
         intervalMinutes: 90
         maxVideosPerRun: 5
+        interestKeywords: []
+        interestCategories: []
         commentMode: 'off'
         maxCommentsPerDay: 1
         enableMemory: true

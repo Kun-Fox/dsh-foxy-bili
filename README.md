@@ -13,7 +13,7 @@ Foxy 的 B 站子插件：它自己刷视频、读字幕、决定要不要评论
   - `remember`：有点意思但不必公开评论，记一笔；
   - `comment`：值得在评论区说一句。
 - 只有 `commentMode: auto` 且当天配额未用完时才发评论；
-- 评论正文会按配置带 `@昵称`（B 站只认正文里的 `@`，`at_name_to_mid` 只是辅助）；
+- 评论正文会按配置带 `@昵称`（B 站只认正文里的 `@`；不再发送会导致 `-400` 的 `at_name_to_mid`）；
 - 有趣的视频会写入 Foxy 记忆 provider（默认 `foxyMemory`，`scene: bilibili`）；
 - 可选通过 Koishi 的 `foxy-memory-bridge` 发 QQ 私聊，或直接用当前 B 站账号发站内私聊，并把这条私聊写入 `scene: private` 的记忆。
 
@@ -35,7 +35,7 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 
 - **账号与登录**：扫码登录 / 退出登录，显示当前账号；
 - **AI 模型**：跟随 DSH 当前模型，或填 Base URL、模型名、API Key 直连 OpenAI 兼容接口；
-- **浏览模式**：启用自动浏览、浏览间隔、每轮浏览数量、评论模式、每日评论上限；
+- **浏览模式**：启用自动浏览、浏览间隔、每轮浏览数量、兴趣关键词、兴趣分区、评论模式、每日评论上限；
 - **评论功能**：默认提及账号、提及白名单、回复他人评论、楼中楼回复、立即评论一次；
 - **私聊推送**：QQ 私聊 / B站私聊开关与对象；推送内容会同时写入私聊记忆；
 - **运行与日志**：立即运行、保存设置、上轮统计与逐条浏览记录；
@@ -81,6 +81,8 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 | `presetPath` | 空 | 可选，直接指定 foxy3.yml |
 | `intervalMinutes` | `90` | 扫描间隔，10–1440 |
 | `maxVideosPerRun` | `5` | 每次最多看几条，1–20 |
+| `interestKeywords` | `[]` | 标题/简介命中任一关键词才浏览；空数组不筛选 |
+| `interestCategories` | `[]` | 只浏览命中的分区（`tname`）；空数组不筛选 |
 | `commentMode` | `off` | `off` / `auto` |
 | `maxCommentsPerDay` | `1` | 每天最多评论几条，0–10 |
 | `enableMemory` | `true` | 是否写 Foxy 记忆 |

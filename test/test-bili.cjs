@@ -2,6 +2,7 @@ const assert = require('node:assert/strict')
 
 async function main() {
   const bili = await import('../lib/bili.js')
+  const interest = await import('../lib/interest.js')
   const judge = await import('../lib/judge.js')
   const login = await import('../lib/login.js')
   const settings = await import('../lib/settings.js')
@@ -49,6 +50,8 @@ async function main() {
     llmBaseUrl: ' https://api.example.com/v1 ',
     llmModel: ' test-model ',
     llmApiKey: ' sk-secret ',
+    interestKeywords: ' 编程, 游戏，编程\n',
+    interestCategories: [' 科技 ', '科技'],
   })
   assert.equal(normalized.enabled, false)
   assert.equal(normalized.intervalMinutes, 10)
@@ -70,6 +73,26 @@ async function main() {
   assert.equal(normalized.llmBaseUrl, 'https://api.example.com/v1')
   assert.equal(normalized.llmModel, 'test-model')
   assert.equal(normalized.llmApiKey, 'sk-secret')
+  assert.deepEqual(normalized.interestKeywords, ['编程', '游戏'])
+  assert.deepEqual(normalized.interestCategories, ['科技'])
+  assert.equal(
+    interest.matchesInterest(
+      { title: '一个编程视频', desc: '', tname: '科技' },
+      normalized,
+    ),
+    true,
+  )
+  assert.equal(
+    interest.matchesInterest({ title: '美食视频', desc: '做饭', tname: '美食' }, normalized),
+    false,
+  )
+  assert.equal(
+    interest.matchesInterest({ title: '随便', desc: '', tname: '' }, {
+      interestKeywords: [],
+      interestCategories: [],
+    }),
+    true,
+  )
   const keptKey = settings.normalizePatch(normalized, { llmApiKey: '' })
   assert.equal(keptKey.llmApiKey, 'sk-secret')
   const clearedKey = settings.normalizePatch(normalized, { clearLlmApiKey: true })
@@ -111,6 +134,24 @@ async function main() {
     () => bili.sendDm({ toUid: '20002', text: '给你看个视频', config: { cookie } }),
     /msg_key/,
   )
+
+  let commentRequest
+  global.fetch = async (url, init) => {
+    commentRequest = { url, init }
+    return new Response(JSON.stringify({ code: 0, data: { rpid: 1 } }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })
+  }
+  await bili.postComment({
+    aid: 123,
+    message: '@测试账号 这个视频有意思',
+    atMids: ['82588812'],
+    config: { cookie },
+  })
+  const commentForm = new URLSearchParams(commentRequest.init.body)
+  assert.equal(commentForm.get('message'), '@测试账号 这个视频有意思')
+  assert.equal(commentForm.has('at_name_to_mid'), false)
   global.fetch = previousFetch
 
   const jar = login.pickCredentials([
