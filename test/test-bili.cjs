@@ -77,11 +77,14 @@ async function main() {
 
   let systemText = ''
   let restricted = false
+  let responses = ['{"action":"remember","comment":"","memory":"我刷到一个测试视频。"}']
+  let responseIndex = -1
   const fakeSession = {
     deriveMessages() {
+      const content = responses[Math.min(Math.max(responseIndex, 0), responses.length - 1)]
       return [
         { role: 'system', content: systemText },
-        { role: 'assistant', content: '{"action":"remember","comment":"","memory":"我刷到一个测试视频。"}' },
+        { role: 'assistant', content },
       ]
     },
   }
@@ -107,7 +110,9 @@ async function main() {
         })
         return {
           agent: {
-            async followup() {},
+            async followup() {
+              responseIndex += 1
+            },
             async whenIdle() {},
             session: fakeSession,
           },
@@ -128,6 +133,36 @@ async function main() {
   assert.match(decision.memory, /测试视频/)
   assert.equal(restricted, true)
   assert.ok(systemText.includes(persona.slice(0, 30)))
+
+  responses = [
+    '{"action":"skip","comment":"","memory":""}',
+    '{"action":"comment","comment":"这个视频我也刷到了，确实有点意思。"}',
+  ]
+  responseIndex = -1
+  const forced = await judge.judgeVideo(fakeCtx, {}, {
+    item: { bvid: 'BV1xx', title: '测试视频' },
+    summary: '标题：测试视频',
+    subtitleText: '',
+    commentsText: '',
+    mayComment: true,
+    forceComment: true,
+  })
+  assert.equal(forced.action, 'comment')
+  assert.match(forced.comment, /有点意思/)
+  assert.equal(responseIndex, 1)
+
+  responses = ['{"action":"skip","comment":""}', '这个视频讲得挺清楚的，我记一下。']
+  responseIndex = -1
+  const prose = await judge.judgeVideo(fakeCtx, {}, {
+    item: { bvid: 'BV1xx', title: '测试视频' },
+    summary: '标题：测试视频',
+    subtitleText: '',
+    commentsText: '',
+    mayComment: true,
+    forceComment: true,
+  })
+  assert.equal(prose.action, 'comment')
+  assert.match(prose.comment, /记一下/)
 
   console.log('foxy-bili tests passed')
 }
