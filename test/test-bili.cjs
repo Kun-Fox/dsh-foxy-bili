@@ -45,6 +45,10 @@ async function main() {
     privateTarget: ' 10001 ',
     biliDmPush: true,
     biliDmTarget: ' 20002 ',
+    llmMode: 'direct',
+    llmBaseUrl: ' https://api.example.com/v1 ',
+    llmModel: ' test-model ',
+    llmApiKey: ' sk-secret ',
   })
   assert.equal(normalized.enabled, false)
   assert.equal(normalized.intervalMinutes, 10)
@@ -62,11 +66,21 @@ async function main() {
   assert.equal(normalized.privateTarget, '10001')
   assert.equal(normalized.biliDmPush, true)
   assert.equal(normalized.biliDmTarget, '20002')
+  assert.equal(normalized.llmMode, 'direct')
+  assert.equal(normalized.llmBaseUrl, 'https://api.example.com/v1')
+  assert.equal(normalized.llmModel, 'test-model')
+  assert.equal(normalized.llmApiKey, 'sk-secret')
+  const keptKey = settings.normalizePatch(normalized, { llmApiKey: '' })
+  assert.equal(keptKey.llmApiKey, 'sk-secret')
+  const clearedKey = settings.normalizePatch(normalized, { clearLlmApiKey: true })
+  assert.equal(clearedKey.llmApiKey, '')
   assert.deepEqual(settings.DEFAULTS.mentionWhitelist, [])
   assert.equal(settings.DEFAULTS.ownerName, '')
   const publicSettings = settings.publicSettings({ ...normalized, cookie: 'SESSDATA=secret' })
   assert.equal(publicSettings.cookie, undefined)
   assert.equal(publicSettings.cookieSet, true)
+  assert.equal(publicSettings.llmApiKey, undefined)
+  assert.equal(publicSettings.llmApiKeySet, true)
   assert.equal(publicSettings.mentionWhitelist.length, 2)
 
   const previousFetch = global.fetch
@@ -112,6 +126,110 @@ async function main() {
     buvid3: 'buvid',
   })
   assert.match(login.credentialToCookie(jar), /SESSDATA=abc,def/)
+
+  const previousDirectFetch = global.fetch
+  let directRequest
+  global.fetch = async (url, init) => {
+    directRequest = { url, init }
+    return new Response(
+      JSON.stringify({
+        choices: [
+          {
+            message: {
+              content:
+                '{"action":"comment","comment":"直连 API 也能评论。","memory":"","mentions":[],"replyTo":0}',
+            },
+          },
+        ],
+      }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    )
+  }
+  const directDecision = await judge.judgeVideo(
+    {},
+    {
+      llmMode: 'direct',
+      llmBaseUrl: 'https://api.example.com/v1',
+      llmModel: 'test-model',
+      llmApiKey: 'sk-test',
+    },
+    {
+      item: { bvid: 'BV1xx', title: '测试视频' },
+      summary: '标题：测试视频',
+      subtitleText: '',
+      commentsText: '',
+      mayComment: true,
+    },
+  )
+  assert.equal(directDecision.action, 'comment')
+  assert.match(directDecision.comment, /直连/)
+  assert.equal(directRequest.url, 'https://api.example.com/v1/chat/completions')
+  assert.equal(directRequest.init.headers.authorization, 'Bearer sk-test')
+  const directBody = JSON.parse(directRequest.init.body)
+  assert.equal(directBody.model, 'test-model')
+  assert.equal(directBody.messages[0].role, 'system')
+  assert.equal(directBody.messages[1].role, 'user')
+
+  let directCalls = 0
+  global.fetch = async () => {
+    directCalls += 1
+    const content =
+      directCalls === 1
+        ? '{"action":"skip","comment":""}'
+        : '{"action":"comment","comment":"重试后的直连评论。"}'
+    return new Response(JSON.stringify({ choices: [{ message: { content } }] }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })
+  }
+  const directForced = await judge.judgeVideo(
+    {},
+    {
+      llmMode: 'direct',
+      llmBaseUrl: 'https://api.example.com',
+      llmModel: 'test-model',
+      llmApiKey: 'sk-test',
+    },
+    {
+      item: { bvid: 'BV1xx', title: '测试视频' },
+      summary: '标题：测试视频',
+      mayComment: true,
+      forceComment: true,
+    },
+  )
+  assert.equal(directCalls, 2)
+  assert.equal(directForced.action, 'comment')
+  assert.match(directForced.comment, /重试后的直连评论/)
+
+  global.fetch = async () =>
+    new Response(JSON.stringify({ choices: [{ message: { content: '' } }] }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })
+  await assert.rejects(
+    () =>
+      judge.judgeVideo(
+        {},
+        {
+          llmMode: 'direct',
+          llmBaseUrl: 'https://api.example.com',
+          llmModel: 'test-model',
+          llmApiKey: 'sk-test',
+        },
+        { item: { bvid: 'BV1xx' }, summary: '', mayComment: true },
+      ),
+    /API 返回空内容/,
+  )
+  await assert.rejects(
+    () =>
+      judge.judgeVideo(
+        {},
+        { llmMode: 'direct', llmBaseUrl: 'https://api.example.com' },
+        { item: { bvid: 'BV1xx' }, summary: '', mayComment: true },
+      ),
+    /API Key/,
+  )
+  global.fetch = previousDirectFetch
 
   let systemText = ''
   let restricted = false

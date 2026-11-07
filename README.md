@@ -34,6 +34,7 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 设置页包含：
 
 - **账号与登录**：扫码登录 / 退出登录，显示当前账号；
+- **AI 模型**：跟随 DSH 当前模型，或填 Base URL、模型名、API Key 直连 OpenAI 兼容接口；
 - **浏览模式**：启用自动浏览、浏览间隔、每轮浏览数量、评论模式、每日评论上限；
 - **评论功能**：默认提及账号、提及白名单、回复他人评论、楼中楼回复、立即评论一次；
 - **私聊推送**：QQ 私聊 / B站私聊开关与对象；推送内容会同时写入私聊记忆；
@@ -50,6 +51,16 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 4. 只把凭证写到本机 `~/.dsh/foxy-bili/settings.json`，**不会回传给前端**。
 
 如果二维码过期，重新点一次即可。
+
+### 直连模型
+
+默认 `llmMode: dsh`，B 站判断使用 DSH 当前选中的模型。若 DSH 的 provider 持续报传输错误，可以在设置页把调用方式改成 **直接 API**，填写：
+
+- 接口地址，默认 `https://api.deepseek.com`；
+- 模型名，默认 `deepseek-chat`；
+- 自己的 API Key。
+
+插件会直接请求 `<接口地址>/chat/completions`，不经过 DSH 的模型层。API Key 只保存在本机 `settings.json`，设置页只显示“已配置/未配置”，不会回传明文；留空保存表示保留原 Key。
 
 ## 配置文件
 
@@ -82,10 +93,13 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 | `privateTarget` | 空 | 私聊 QQ；留空使用桥接配置的 `userId` |
 | `biliDmPush` | `false` | 是否允许模型把有趣视频通过 B站站内私聊推送 |
 | `biliDmTarget` | 空 | B站接收者 UID；留空使用 `ownerUid` |
+| `llmMode` | `dsh` | `dsh` 跟随 DSH；`direct` 直连 API |
+| `llmBaseUrl` | `https://api.deepseek.com` | 直连模式的 OpenAI 兼容地址 |
+| `llmModel` | `deepseek-chat` | 直连模式的模型名 |
 | `runOnStart` | `false` | 启动 20 秒后先运行一轮 |
 | `debug` | `false` | 额外日志 |
 
-`cookie` 只存在于设置文件，设置页只显示「已登录 / 未登录」。
+`cookie` 与 `llmApiKey` 只存在于设置文件，设置页只显示「已登录 / 未登录」「已配置 / 未配置」。
 
 ### 私聊推送
 
