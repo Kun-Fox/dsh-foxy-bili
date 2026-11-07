@@ -48,7 +48,9 @@ async function main() {
   )
   assert.equal(registered[0].key, 'dsh-foxy-bili')
   assert.equal(registered[1].id, 'dsh-foxy-bili')
+  assert.equal(registered[1].label(), 'Foxy-bili')
   assert.equal(registered[2].id, 'foxy-bili')
+  assert.equal(registered[2].label, 'Foxy-bili')
 
   console.log('foxy-bili client tests passed')
 }

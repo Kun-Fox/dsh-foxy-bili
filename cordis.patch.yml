@@ -2,7 +2,7 @@
 # Install with:
 #   dsh plugin --profile desktop add file:D:\...\dsh-foxy-bili
 #
-# After restart, open Settings → 刷B站. The dashboard writes
+# After restart, open Settings → Foxy-bili. The dashboard writes
 # ~/.dsh/foxy-bili/settings.json and supports QR login; this YAML entry only
 # provides defaults for the first run.
 - insert:
@@ -19,4 +19,7 @@
         enableMemory: true
         memoryPresetId: 'foxy3（Character）'
         mentionOwner: true
+        mentionWhitelist: []
+        replyOthers: false
+        nestedReplies: false
         runOnStart: false

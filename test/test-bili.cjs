@@ -33,17 +33,33 @@ async function main() {
     maxVideosPerRun: 99,
     maxCommentsPerDay: -3,
     commentMode: 'weird',
-    ownerName: '  坤坤 ',
+    ownerName: '  测试账号 ',
+    mentionWhitelist: [
+      { name: ' 白名单甲 ', uid: ' 100 ' },
+      { name: '', uid: '200' },
+      { name: '白名单甲', uid: '100' },
+    ],
+    replyOthers: true,
+    nestedReplies: true,
   })
   assert.equal(normalized.enabled, false)
   assert.equal(normalized.intervalMinutes, 10)
   assert.equal(normalized.maxVideosPerRun, 20)
   assert.equal(normalized.maxCommentsPerDay, 0)
   assert.equal(normalized.commentMode, 'off')
-  assert.equal(normalized.ownerName, '坤坤')
+  assert.equal(normalized.ownerName, '测试账号')
+  assert.deepEqual(normalized.mentionWhitelist, [
+    { name: '白名单甲', uid: '100' },
+    { name: '', uid: '200' },
+  ])
+  assert.equal(normalized.replyOthers, true)
+  assert.equal(normalized.nestedReplies, true)
+  assert.deepEqual(settings.DEFAULTS.mentionWhitelist, [])
+  assert.equal(settings.DEFAULTS.ownerName, '')
   const publicSettings = settings.publicSettings({ ...normalized, cookie: 'SESSDATA=secret' })
   assert.equal(publicSettings.cookie, undefined)
   assert.equal(publicSettings.cookieSet, true)
+  assert.equal(publicSettings.mentionWhitelist.length, 2)
 
   const jar = login.pickCredentials([
     'SESSDATA=abc%2Cdef; Path=/; HttpOnly',

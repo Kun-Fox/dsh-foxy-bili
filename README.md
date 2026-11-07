@@ -13,7 +13,7 @@ Foxy 的 B 站子插件：它自己刷视频、读字幕、决定要不要评论
   - `remember`：有点意思但不必公开评论，记一笔；
   - `comment`：值得在评论区说一句。
 - 只有 `commentMode: auto` 且当天配额未用完时才发评论；
-- 评论正文会带 `@主人昵称`（B 站只认正文里的 `@`，`at_name_to_mid` 只是辅助）；
+- 评论正文会按配置带 `@昵称`（B 站只认正文里的 `@`，`at_name_to_mid` 只是辅助）；
 - 有趣的视频会写入 Foxy 记忆 provider（默认 `foxyMemory`，`scene: bilibili`）。
 
 **模型永远拿不到 B 站工具、Shell、文件系统。** 它只输出 JSON，网络写入由插件自己做。这样视频标题/字幕里的提示词注入无法越权。
@@ -24,20 +24,19 @@ Foxy 的 B 站子插件：它自己刷视频、读字幕、决定要不要评论
 dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-workspace\dsh-foxy-bili
 ```
 
-装完**完全重启 DSH**。然后可以直接点左侧栏的 **Foxy 刷B站** 图标，或打开 **设置 → Foxy 刷B站**；不需要手改 `cordis.patch.yml`。
+装完**完全重启 DSH**。然后可以直接点左侧栏的 **Foxy-bili** 图标，或打开 **设置 → Foxy-bili**；不需要手改 `cordis.patch.yml`。
 
 ## 设置页
 
-左侧栏有 **Foxy 刷B站** 图标，点开就是同一套设置；也可以在 **设置 → Foxy 刷B站** 打开。
+左侧栏有 **Foxy-bili** 图标，点开就是同一套设置；也可以在 **设置 → Foxy-bili** 打开。
 
 设置页包含：
 
-- **总开关**：关闭后定时器不跑，但「手动跑一轮」仍可用；
-- **B 站账号**：扫码登录 / 退出登录，显示当前账号；
-- **主人昵称 + UID**：评论时 @ 的对象；
-- **间隔 / 每轮条数 / 评论模式 / 每天最多评论**；
-- **写记忆 / 启动先跑一轮**；
-- **手动跑一轮 / 保存设置**，以及上一轮统计。
+- **账号与登录**：扫码登录 / 退出登录，显示当前账号；
+- **浏览模式**：启用自动浏览、浏览间隔、每轮浏览数量、评论模式、每日评论上限；
+- **评论功能**：默认提及账号、提及白名单、回复他人评论、楼中楼回复、立即评论一次；
+- **运行与日志**：立即运行、保存设置、上轮统计与逐条浏览记录；
+- **记忆与启动**：写入 Foxy 记忆、启动 DSH 后自动运行。
 
 ### 扫码登录
 
@@ -73,8 +72,11 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 | `maxCommentsPerDay` | `1` | 每天最多评论几条，0–10 |
 | `enableMemory` | `true` | 是否写 Foxy 记忆 |
 | `memoryPresetId` | `foxy3（Character）` | 记忆池 |
-| `mentionOwner` | `true` | 评论是否 @ 主人 |
-| `runOnStart` | `false` | 启动 20 秒后先跑一轮 |
+| `mentionOwner` | `true` | 评论是否默认 @ 主人 |
+| `mentionWhitelist` | `[]` | 允许模型选择 @ 的账号，最多 20 个 |
+| `replyOthers` | `false` | 是否允许回复视频下的一级评论 |
+| `nestedReplies` | `false` | 是否允许回复楼中楼；需先开启 `replyOthers` |
+| `runOnStart` | `false` | 启动 20 秒后先运行一轮 |
 | `debug` | `false` | 额外日志 |
 
 `cookie` 只存在于设置文件，设置页只显示「已登录 / 未登录」。
@@ -82,10 +84,11 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 ## 建议的安全顺序
 
 1. 扫码登录，`enabled: true`、`commentMode: off`；
-2. 先手动跑一轮，看日志里它挑了什么、记忆写了什么；
+2. 先「立即运行」，看日志里它挑了什么、记忆写了什么；
 3. 确认它不刷无意义视频后，改成 `commentMode: auto`，`maxCommentsPerDay: 1`；
-4. 公开评论有账号风控风险，别一上来就高频；
-5. 不要把 `ownerUid/ownerName` 填成陌生人。
+4. 需要验证评论时用「立即评论一次」；它不占自动评论配额，但仍会真实发布；
+5. 公开评论有账号风控风险，别一上来就高频；
+6. 不要把 `ownerUid/ownerName` 填成陌生人。
 
 ## 限制
 
