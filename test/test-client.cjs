@@ -41,9 +41,14 @@ async function main() {
     },
   }
   clientModule.apply(ctx)
-  assert.equal(registered.length, 1)
-  assert.equal(registered[0].name, 'settings.section')
-  assert.equal(registered[0].id, 'foxy-bili')
+  assert.equal(registered.length, 3)
+  assert.deepEqual(
+    registered.map((x) => x.name),
+    ['main', 'sidebar.panellist', 'settings.section'],
+  )
+  assert.equal(registered[0].key, 'dsh-foxy-bili')
+  assert.equal(registered[1].id, 'dsh-foxy-bili')
+  assert.equal(registered[2].id, 'foxy-bili')
 
   console.log('foxy-bili client tests passed')
 }

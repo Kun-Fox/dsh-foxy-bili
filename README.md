@@ -24,9 +24,11 @@ Foxy 的 B 站子插件：它自己刷视频、读字幕、决定要不要评论
 dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-workspace\dsh-foxy-bili
 ```
 
-装完**完全重启 DSH**。然后打开 **设置 → 刷B站**，不需要手改 `cordis.patch.yml`。
+装完**完全重启 DSH**。然后可以直接点左侧栏的 **Foxy 刷B站** 图标，或打开 **设置 → Foxy 刷B站**；不需要手改 `cordis.patch.yml`。
 
 ## 设置页
+
+左侧栏有 **Foxy 刷B站** 图标，点开就是同一套设置；也可以在 **设置 → Foxy 刷B站** 打开。
 
 设置页包含：
 
