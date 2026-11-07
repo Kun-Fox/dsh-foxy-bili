@@ -24,4 +24,6 @@
         nestedReplies: false
         privatePush: false
         privateTarget: ''
+        biliDmPush: false
+        biliDmTarget: ''
         runOnStart: false

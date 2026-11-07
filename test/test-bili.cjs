@@ -43,6 +43,8 @@ async function main() {
     nestedReplies: true,
     privatePush: true,
     privateTarget: ' 10001 ',
+    biliDmPush: true,
+    biliDmTarget: ' 20002 ',
   })
   assert.equal(normalized.enabled, false)
   assert.equal(normalized.intervalMinutes, 10)
@@ -58,12 +60,44 @@ async function main() {
   assert.equal(normalized.nestedReplies, true)
   assert.equal(normalized.privatePush, true)
   assert.equal(normalized.privateTarget, '10001')
+  assert.equal(normalized.biliDmPush, true)
+  assert.equal(normalized.biliDmTarget, '20002')
   assert.deepEqual(settings.DEFAULTS.mentionWhitelist, [])
   assert.equal(settings.DEFAULTS.ownerName, '')
   const publicSettings = settings.publicSettings({ ...normalized, cookie: 'SESSDATA=secret' })
   assert.equal(publicSettings.cookie, undefined)
   assert.equal(publicSettings.cookieSet, true)
   assert.equal(publicSettings.mentionWhitelist.length, 2)
+
+  const previousFetch = global.fetch
+  let dmRequest
+  global.fetch = async (url, init) => {
+    dmRequest = { url, init }
+    return new Response(JSON.stringify({ code: 0, data: { msg_key: 'dm-key-1' } }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })
+  }
+  const dm = await bili.sendDm({ toUid: '20002', text: '给你看个视频', config: { cookie } })
+  assert.equal(dm.msgKey, 'dm-key-1')
+  assert.match(dmRequest.url, /web_im\/v1\/web_im\/send_msg/)
+  const dmForm = new URLSearchParams(dmRequest.init.body)
+  assert.equal(dmForm.get('msg[sender_uid]'), '82588812')
+  assert.equal(dmForm.get('msg[receiver_id]'), '20002')
+  assert.equal(dmForm.get('msg[msg_type]'), '1')
+  assert.equal(dmForm.get('csrf'), 'xyz')
+  assert.match(dmForm.get('msg[content]'), /给你看个视频/)
+
+  global.fetch = async () =>
+    new Response(JSON.stringify({ code: 0, data: {} }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })
+  await assert.rejects(
+    () => bili.sendDm({ toUid: '20002', text: '给你看个视频', config: { cookie } }),
+    /msg_key/,
+  )
+  global.fetch = previousFetch
 
   const jar = login.pickCredentials([
     'SESSDATA=abc%2Cdef; Path=/; HttpOnly',

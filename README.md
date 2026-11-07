@@ -15,7 +15,7 @@ Foxy 的 B 站子插件：它自己刷视频、读字幕、决定要不要评论
 - 只有 `commentMode: auto` 且当天配额未用完时才发评论；
 - 评论正文会按配置带 `@昵称`（B 站只认正文里的 `@`，`at_name_to_mid` 只是辅助）；
 - 有趣的视频会写入 Foxy 记忆 provider（默认 `foxyMemory`，`scene: bilibili`）；
-- 可选通过 Koishi 的 `foxy-memory-bridge` 给主人发 QQ 私聊，并把这条私聊写入 `scene: private` 的记忆。
+- 可选通过 Koishi 的 `foxy-memory-bridge` 发 QQ 私聊，或直接用当前 B 站账号发站内私聊，并把这条私聊写入 `scene: private` 的记忆。
 
 **模型永远拿不到 B 站工具、Shell、文件系统。** 它只输出 JSON，网络写入由插件自己做。这样视频标题/字幕里的提示词注入无法越权。
 
@@ -36,7 +36,7 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 - **账号与登录**：扫码登录 / 退出登录，显示当前账号；
 - **浏览模式**：启用自动浏览、浏览间隔、每轮浏览数量、评论模式、每日评论上限；
 - **评论功能**：默认提及账号、提及白名单、回复他人评论、楼中楼回复、立即评论一次；
-- **私聊推送**：开关、私聊对象 QQ；推送内容会同时写入私聊记忆；
+- **私聊推送**：QQ 私聊 / B站私聊开关与对象；推送内容会同时写入私聊记忆；
 - **运行与日志**：立即运行、保存设置、上轮统计与逐条浏览记录；
 - **记忆与启动**：写入 Foxy 记忆、启动 DSH 后自动运行。
 
@@ -78,8 +78,10 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 | `mentionWhitelist` | `[]` | 允许模型选择 @ 的账号，最多 20 个 |
 | `replyOthers` | `false` | 是否允许回复视频下的一级评论 |
 | `nestedReplies` | `false` | 是否允许回复楼中楼；需先开启 `replyOthers` |
-| `privatePush` | `false` | 是否允许模型把有趣视频私聊推送 |
+| `privatePush` | `false` | 是否允许模型把有趣视频通过 QQ 私聊推送 |
 | `privateTarget` | 空 | 私聊 QQ；留空使用桥接配置的 `userId` |
+| `biliDmPush` | `false` | 是否允许模型把有趣视频通过 B站站内私聊推送 |
+| `biliDmTarget` | 空 | B站接收者 UID；留空使用 `ownerUid` |
 | `runOnStart` | `false` | 启动 20 秒后先运行一轮 |
 | `debug` | `false` | 额外日志 |
 
@@ -87,15 +89,14 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 
 ### 私聊推送
 
-私聊推送需要 Koishi 侧安装并启用 `koishi-plugin-foxy-memory-bridge@0.1.15+`，并让 DSH 的 `dsh-foxy-memory` 指向同一个桥。插件会读取 `~/.dsh/foxy/settings.json` 的 `bridgeUrl` 和 `bridgeToken`，调用：
+私聊推送支持两条通道，可以单独开，也可以同时开：
 
-```text
-POST <bridgeUrl>/send-private
-```
+- **QQ 私聊**：需要 Koishi 侧安装并启用 `koishi-plugin-foxy-memory-bridge@0.1.15+`，并让 DSH 的 `dsh-foxy-memory` 指向同一个桥。插件会读取 `~/.dsh/foxy/settings.json` 的 `bridgeUrl` 和 `bridgeToken`，调用 `POST <bridgeUrl>/send-private`。
+- **B站私聊**：直接使用当前扫码登录的 B 站 Cookie，调用网页私信接口。只有接口返回 `msg_key`（投递回执）才算成功；没有回执通常是对方不收陌生人私信或触发风控。
 
-模型必须同时给出 `dm: true` 和 `dmText`；`skip` 的视频不会推送。发送成功后，插件再写一条 `scene: "private"`、`platform: "qq"` 的记忆，内容类似“我在 QQ 私聊里，把刷到的视频发给了主人……”。
+模型必须同时给出 `dm: true` 和 `dmText`；`skip` 的视频不会推送。发送成功后，插件再写一条 `scene: "private"` 的记忆，内容类似“我在 QQ 私聊/B站私聊里，把刷到的视频发给了主人……”。
 
-默认关闭；建议先在设置页填自己的 QQ，只对“觉得有意思”的视频开启，避免刷屏。
+默认关闭；建议只对“觉得有意思”的视频开启，避免刷屏。B站私聊要求接收者允许陌生人私信，第一次测试最好用自己的小号或已互关账号。
 
 ## 建议的安全顺序
 
@@ -112,7 +113,8 @@ POST <bridgeUrl>/send-private
 - 字幕接口经常要求登录，读不到字幕时只靠标题/简介判断。
 - 评论是否显示受 B 站审核影响，插件只能提交，不能保证公开可见。
 - 目前只做热门流，不做全站搜索/关注流。
-- 记忆写入走 `dsh-foxy-memory` 的 provider；LivingMemory 桥已支持 `scene: bilibili` 的提示词。
+- 记忆写入走 `dsh-foxy-memory` 的 provider；LivingMemory 桥已支持 `scene: bilibili` 与 `scene: private` 的提示词。
+- B站站内私信要求对方允许陌生人私信；没有 `msg_key` 回执时插件会报失败，不会把“已提交”当成“已送达”。
 
 ## 开发
 
