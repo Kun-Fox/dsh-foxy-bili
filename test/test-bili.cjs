@@ -3,6 +3,8 @@ const assert = require('node:assert/strict')
 async function main() {
   const bili = await import('../lib/bili.js')
   const judge = await import('../lib/judge.js')
+  const login = await import('../lib/login.js')
+  const settings = await import('../lib/settings.js')
 
   const cookie = 'SESSDATA=abc; bili_jct=xyz; DedeUserID=82588812'
   assert.equal(bili.parseCookie(cookie).bili_jct, 'xyz')
@@ -24,6 +26,38 @@ async function main() {
   const persona = judge.readFoxyPersona({})
   assert.ok(persona.length > 100, 'foxy3 persona should be readable')
   assert.match(persona, /Foxy|狐狸|kunfox/)
+
+  const normalized = settings.normalizePatch(settings.DEFAULTS, {
+    enabled: 'yes',
+    intervalMinutes: 2,
+    maxVideosPerRun: 99,
+    maxCommentsPerDay: -3,
+    commentMode: 'weird',
+    ownerName: '  坤坤 ',
+  })
+  assert.equal(normalized.enabled, false)
+  assert.equal(normalized.intervalMinutes, 10)
+  assert.equal(normalized.maxVideosPerRun, 20)
+  assert.equal(normalized.maxCommentsPerDay, 0)
+  assert.equal(normalized.commentMode, 'off')
+  assert.equal(normalized.ownerName, '坤坤')
+  const publicSettings = settings.publicSettings({ ...normalized, cookie: 'SESSDATA=secret' })
+  assert.equal(publicSettings.cookie, undefined)
+  assert.equal(publicSettings.cookieSet, true)
+
+  const jar = login.pickCredentials([
+    'SESSDATA=abc%2Cdef; Path=/; HttpOnly',
+    'bili_jct=xyz; Path=/',
+    'DedeUserID=82588812; Path=/',
+    'buvid3=buvid; Path=/',
+  ])
+  assert.deepEqual(jar, {
+    sessdata: 'abc,def',
+    bili_jct: 'xyz',
+    dedeuserid: '82588812',
+    buvid3: 'buvid',
+  })
+  assert.match(login.credentialToCookie(jar), /SESSDATA=abc,def/)
 
   let systemText = ''
   let restricted = false

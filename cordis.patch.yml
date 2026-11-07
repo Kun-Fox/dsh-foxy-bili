@@ -1,18 +1,22 @@
 # dsh-foxy-bili bundle patch.
 # Install with:
 #   dsh plugin --profile desktop add file:D:\...\dsh-foxy-bili
-# After restart, edit the `foxy-bili` entry in the desktop profile's
-# cordis.patch.yml to set cookie / owner / comment mode.
+#
+# After restart, open Settings → 刷B站. The dashboard writes
+# ~/.dsh/foxy-bili/settings.json and supports QR login; this YAML entry only
+# provides defaults for the first run.
 - insert:
     - id: foxy-bili
       name: dsh-foxy-bili
       config:
         enabled: false
-        cookie: ''
         ownerUid: ''
         ownerName: ''
         intervalMinutes: 90
         maxVideosPerRun: 5
         commentMode: 'off'
-        maxCommentsPerRun: 1
+        maxCommentsPerDay: 1
         enableMemory: true
+        memoryPresetId: 'foxy3（Character）'
+        mentionOwner: true
+        runOnStart: false

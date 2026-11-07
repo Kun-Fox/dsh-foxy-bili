@@ -14,7 +14,7 @@ Foxy 的 B 站子插件：它自己刷视频、读字幕、决定要不要评论
   - `comment`：值得在评论区说一句。
 - 只有 `commentMode: auto` 且当天配额未用完时才发评论；
 - 评论正文会带 `@主人昵称`（B 站只认正文里的 `@`，`at_name_to_mid` 只是辅助）；
-- 有趣的视频会写入 Foxy 记忆 provider（默认 `foxyMemory`）。
+- 有趣的视频会写入 Foxy 记忆 provider（默认 `foxyMemory`，`scene: bilibili`）。
 
 **模型永远拿不到 B 站工具、Shell、文件系统。** 它只输出 JSON，网络写入由插件自己做。这样视频标题/字幕里的提示词注入无法越权。
 
@@ -24,64 +24,80 @@ Foxy 的 B 站子插件：它自己刷视频、读字幕、决定要不要评论
 dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-workspace\dsh-foxy-bili
 ```
 
-装完**完全重启 DSH**。然后在 `C:\Users\MECHREV\.dsh\profiles\desktop\cordis.patch.yml` 里找到/追加 `foxy-bili` 配置：
+装完**完全重启 DSH**。然后打开 **设置 → 刷B站**，不需要手改 `cordis.patch.yml`。
 
-```yaml
-- id: foxy-bili
-  name: dsh-foxy-bili
-  config:
-    enabled: true
-    cookie: 'SESSDATA=...; bili_jct=...; DedeUserID=...'
-    ownerUid: '82588812'
-    ownerName: '你的B站昵称'
-    intervalMinutes: 90
-    maxVideosPerRun: 5
-    commentMode: 'off'        # 先 off；确认后再 auto
-    maxCommentsPerRun: 1
-    enableMemory: true
-    memoryPresetId: 'foxy3（Character）'
+## 设置页
+
+设置页包含：
+
+- **总开关**：关闭后定时器不跑，但「手动跑一轮」仍可用；
+- **B 站账号**：扫码登录 / 退出登录，显示当前账号；
+- **主人昵称 + UID**：评论时 @ 的对象；
+- **间隔 / 每轮条数 / 评论模式 / 每天最多评论**；
+- **写记忆 / 启动先跑一轮**；
+- **手动跑一轮 / 保存设置**，以及上一轮统计。
+
+### 扫码登录
+
+点「扫码登录」后，插件会：
+
+1. 调 B 站 passport 生成二维码（`qrcode` 在本地渲染成 data URL，不经过第三方）；
+2. 每 2 秒轮询一次，最多约 3 分钟；
+3. 登录成功后从轮询响应的 `Set-Cookie` 里提取 `SESSDATA`、`bili_jct`、`DedeUserID`、`buvid3`；
+4. 只把凭证写到本机 `~/.dsh/foxy-bili/settings.json`，**不会回传给前端**。
+
+如果二维码过期，重新点一次即可。
+
+## 配置文件
+
+设置页保存到：
+
+```
+~/.dsh/foxy-bili/settings.json
 ```
 
-没有 `cookie` 时只能读热门/视频信息，不能发评论。`bili_jct` 就是 CSRF token，发评论必需。
-
-## 建议的安全顺序
-
-1. `enabled: true`、`commentMode: off`，先看日志里它挑了什么、记忆写了什么；
-2. 确认它不刷无意义视频后，改成 `commentMode: auto`，`maxCommentsPerRun: 1`；
-3. 公开评论有账号风控风险，别一上来就高频；
-4. 不要把 `ownerUid/ownerName` 填成陌生人。
-
-## 配置
+`cordis.patch.yml` 里的 `foxy-bili.config` 只作为首次默认值；设置页保存后会覆盖它。需要备份/迁移时复制这个 JSON 即可。
 
 | 字段 | 默认 | 说明 |
 |---|---|---|
 | `enabled` | `false` | 总开关 |
-| `cookie` | 空 | B 站 Cookie；写评论必须含 `bili_jct` |
-| `ownerUid` | 空 | 被 @ 的 UID，辅助字段 |
+| `ownerUid` | 空 | 被 @ 的 UID，传给 B 站 at 接口 |
 | `ownerName` | 空 | 评论正文里的 `@昵称` |
 | `presetId` | `foxy3` | 读取的人设 |
 | `presetPath` | 空 | 可选，直接指定 foxy3.yml |
-| `intervalMinutes` | `90` | 扫描间隔 |
-| `maxVideosPerRun` | `5` | 每次最多看几条 |
+| `intervalMinutes` | `90` | 扫描间隔，10–1440 |
+| `maxVideosPerRun` | `5` | 每次最多看几条，1–20 |
 | `commentMode` | `off` | `off` / `auto` |
-| `maxCommentsPerRun` | `1` | 每天最多评论几条 |
+| `maxCommentsPerDay` | `1` | 每天最多评论几条，0–10 |
 | `enableMemory` | `true` | 是否写 Foxy 记忆 |
 | `memoryPresetId` | `foxy3（Character）` | 记忆池 |
+| `mentionOwner` | `true` | 评论是否 @ 主人 |
 | `runOnStart` | `false` | 启动 20 秒后先跑一轮 |
 | `debug` | `false` | 额外日志 |
+
+`cookie` 只存在于设置文件，设置页只显示「已登录 / 未登录」。
+
+## 建议的安全顺序
+
+1. 扫码登录，`enabled: true`、`commentMode: off`；
+2. 先手动跑一轮，看日志里它挑了什么、记忆写了什么；
+3. 确认它不刷无意义视频后，改成 `commentMode: auto`，`maxCommentsPerDay: 1`；
+4. 公开评论有账号风控风险，别一上来就高频；
+5. 不要把 `ownerUid/ownerName` 填成陌生人。
 
 ## 限制
 
 - B 站没有官方评论开放 API，使用网页 Cookie；WBI/风控变化可能导致读取或评论失败。
 - 字幕接口经常要求登录，读不到字幕时只靠标题/简介判断。
 - 评论是否显示受 B 站审核影响，插件只能提交，不能保证公开可见。
-- 目前只做热门流，不做全站搜索/关注流；后续可以加。
-- 记忆写入走 `dsh-foxy-memory` 的 provider；如果 provider 是 LivingMemory 桥，B 站场景的提示词还需要桥侧支持（见 TODO）。
+- 目前只做热门流，不做全站搜索/关注流。
+- 记忆写入走 `dsh-foxy-memory` 的 provider；LivingMemory 桥已支持 `scene: bilibili` 的提示词。
 
 ## 开发
 
 ```powershell
 node --check lib/index.js
+node --check lib/client.js
 node test/test-bili.cjs
 ```
 
