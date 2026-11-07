@@ -35,3 +35,4 @@
         llmBaseUrl: 'https://api.deepseek.com'
         llmModel: 'deepseek-chat'
         runOnStart: false
+        debug: false

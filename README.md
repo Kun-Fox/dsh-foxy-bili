@@ -40,7 +40,8 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 - **私聊推送**：QQ 私聊 / B站私聊开关与对象；推送内容会同时写入私聊记忆；
 - **评论回复**：检查「回复我的」「@我的」，查看原视频后回复；可配置间隔和每轮最多回复；
 - **运行与日志**：立即运行、立即检查评论通知、保存设置、上轮统计与逐条浏览记录；
-- **记忆与启动**：写入 Foxy 记忆、启动 DSH 后自动运行。
+- **记忆与启动**：写入 Foxy 记忆、启动 DSH 后自动运行；
+- **调试**：记录模型决策、记忆写入结果和通知处理，排查“为什么没写记忆/为什么跳过”。
 
 ### 扫码登录
 
@@ -103,7 +104,7 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 | `llmBaseUrl` | `https://api.deepseek.com` | 直连模式的 OpenAI 兼容地址 |
 | `llmModel` | `deepseek-chat` | 直连模式的模型名 |
 | `runOnStart` | `false` | 启动 20 秒后先运行一轮 |
-| `debug` | `false` | 额外日志 |
+| `debug` | `false` | 记录模型决策/记忆写入调试事件，设置页可查看 |
 
 `cookie` 与 `llmApiKey` 只存在于设置文件，设置页只显示「已登录 / 未登录」「已配置 / 未配置」。
 
@@ -134,6 +135,7 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 - 评论是否显示受 B 站审核影响，插件只能提交，不能保证公开可见。
 - 目前只做热门流，不做全站搜索/关注流。
 - 记忆写入走 `dsh-foxy-memory` 的 provider；LivingMemory 桥已支持 `scene: bilibili` 与 `scene: private` 的提示词。
+- `skip` 的视频不写记忆；评论、手动评论和评论回复会写一条对应记忆。若写入失败，设置页“调试”会显示原因。
 - B站站内私信要求对方允许陌生人私信；没有 `msg_key` 回执时插件会报失败，不会把“已提交”当成“已送达”。
 
 ## 开发
