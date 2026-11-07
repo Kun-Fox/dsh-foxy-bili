@@ -22,4 +22,6 @@
         mentionWhitelist: []
         replyOthers: false
         nestedReplies: false
+        privatePush: false
+        privateTarget: ''
         runOnStart: false

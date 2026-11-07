@@ -41,6 +41,8 @@ async function main() {
     ],
     replyOthers: true,
     nestedReplies: true,
+    privatePush: true,
+    privateTarget: ' 10001 ',
   })
   assert.equal(normalized.enabled, false)
   assert.equal(normalized.intervalMinutes, 10)
@@ -54,6 +56,8 @@ async function main() {
   ])
   assert.equal(normalized.replyOthers, true)
   assert.equal(normalized.nestedReplies, true)
+  assert.equal(normalized.privatePush, true)
+  assert.equal(normalized.privateTarget, '10001')
   assert.deepEqual(settings.DEFAULTS.mentionWhitelist, [])
   assert.equal(settings.DEFAULTS.ownerName, '')
   const publicSettings = settings.publicSettings({ ...normalized, cookie: 'SESSDATA=secret' })
@@ -163,6 +167,30 @@ async function main() {
   })
   assert.equal(prose.action, 'comment')
   assert.match(prose.comment, /记一下/)
+
+  responses = ['{"action":"remember","memory":"记一下","dm":true,"dmText":"这个我也想发给你看看。"}']
+  responseIndex = -1
+  const privateDecision = await judge.judgeVideo(fakeCtx, {}, {
+    item: { bvid: 'BV1xx', title: '测试视频' },
+    summary: '标题：测试视频',
+    subtitleText: '',
+    commentsText: '',
+    mayComment: false,
+    privatePush: true,
+  })
+  assert.equal(privateDecision.dm, true)
+  assert.match(privateDecision.dmText, /发给你/)
+
+  const privateOff = await judge.judgeVideo(fakeCtx, {}, {
+    item: { bvid: 'BV1xx', title: '测试视频' },
+    summary: '标题：测试视频',
+    subtitleText: '',
+    commentsText: '',
+    mayComment: false,
+    privatePush: false,
+  })
+  assert.equal(privateOff.dm, false)
+  assert.equal(privateOff.dmText, '')
 
   console.log('foxy-bili tests passed')
 }
