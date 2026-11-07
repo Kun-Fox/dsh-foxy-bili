@@ -1,0 +1,18 @@
+# dsh-foxy-bili bundle patch.
+# Install with:
+#   dsh plugin --profile desktop add file:D:\...\dsh-foxy-bili
+# After restart, edit the `foxy-bili` entry in the desktop profile's
+# cordis.patch.yml to set cookie / owner / comment mode.
+- insert:
+    - id: foxy-bili
+      name: dsh-foxy-bili
+      config:
+        enabled: false
+        cookie: ''
+        ownerUid: ''
+        ownerName: ''
+        intervalMinutes: 90
+        maxVideosPerRun: 5
+        commentMode: 'off'
+        maxCommentsPerRun: 1
+        enableMemory: true

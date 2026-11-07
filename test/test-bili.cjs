@@ -1,0 +1,88 @@
+const assert = require('node:assert/strict')
+
+async function main() {
+  const bili = await import('../lib/bili.js')
+  const judge = await import('../lib/judge.js')
+
+  const cookie = 'SESSDATA=abc; bili_jct=xyz; DedeUserID=82588812'
+  assert.equal(bili.parseCookie(cookie).bili_jct, 'xyz')
+  assert.equal(bili.csrfFromCookie(cookie), 'xyz')
+  assert.equal(bili.csrfFromCookie('SESSDATA=abc'), '')
+
+  const summary = bili.videoSummary({
+    title: '测试视频',
+    bvid: 'BV1xx',
+    owner: { name: 'UP' },
+    duration: 130,
+    stat: { view: 10, like: 2, reply: 1 },
+    desc: '简介',
+  })
+  assert.match(summary, /标题：测试视频/)
+  assert.match(summary, /BV：BV1xx/)
+  assert.match(summary, /时长：2 分钟/)
+
+  const persona = judge.readFoxyPersona({})
+  assert.ok(persona.length > 100, 'foxy3 persona should be readable')
+  assert.match(persona, /Foxy|狐狸|kunfox/)
+
+  let systemText = ''
+  let restricted = false
+  const fakeSession = {
+    deriveMessages() {
+      return [
+        { role: 'system', content: systemText },
+        { role: 'assistant', content: '{"action":"remember","comment":"","memory":"我刷到一个测试视频。"}' },
+      ]
+    },
+  }
+  const fakeCtx = {
+    agentDefaultModel: { currentSelection: () => ({ provider: 'deepseek-account', model: 'deepseek-flash' }) },
+    agents: {
+      async create(opts) {
+        assert.equal(opts.sessionId.startsWith('foxy-bili-'), true)
+        opts.setup({
+          systemPrompt: {
+            section(section) {
+              systemText = section.text
+              assert.equal(section.complete, true)
+              assert.equal(section.interpolate, false)
+            },
+          },
+          tools: {
+            restrict(spec) {
+              restricted = true
+              assert.deepEqual(spec.allow, [])
+            },
+          },
+        })
+        return {
+          agent: {
+            async followup() {},
+            async whenIdle() {},
+            session: fakeSession,
+          },
+          async dispose() {},
+        }
+      },
+    },
+  }
+
+  const decision = await judge.judgeVideo(fakeCtx, {}, {
+    item: { bvid: 'BV1xx', title: '测试视频' },
+    summary: '标题：测试视频',
+    subtitleText: '',
+    commentsText: '',
+    mayComment: true,
+  })
+  assert.equal(decision.action, 'remember')
+  assert.match(decision.memory, /测试视频/)
+  assert.equal(restricted, true)
+  assert.ok(systemText.includes(persona.slice(0, 30)))
+
+  console.log('foxy-bili tests passed')
+}
+
+main().catch((error) => {
+  console.error(error)
+  process.exit(1)
+})

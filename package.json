@@ -1,0 +1,42 @@
+{
+  "name": "dsh-foxy-bili",
+  "version": "0.1.0",
+  "description": "Foxy 的 B 站子插件：自己刷视频、读字幕、决定要不要评论/记住，并通过 foxy3 人设与 memory 说话。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "manifestVersion": 1
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "author": "Kun-Fox",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kun-Fox/dsh-foxy-bili.git"
+  },
+  "homepage": "https://github.com/Kun-Fox/dsh-foxy-bili#readme",
+  "bugs": {
+    "url": "https://github.com/Kun-Fox/dsh-foxy-bili/issues"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "foxy",
+    "bilibili",
+    "agent"
+  ],
+  "license": "MIT"
+}
