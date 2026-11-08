@@ -158,7 +158,16 @@ async function main() {
   assert.equal(inbox[0].parent, '322954523360')
   assert.equal(inbox[1].rpid, '323265024992')
   assert.match(inbox[1].rootText, /原评论/)
-  assert.match(index.inboxReplyMessage({}, inbox[0], { comment: '来了。' }), /@我的人 来了。/)
+  assert.equal(index.inboxReplyMessage({}, inbox[0], { comment: '@我的人 来了。' }), '来了。')
+  assert.equal(index.inboxVideoCooling({ inboxVideos: { BV1test: 1000 } }, 'BV1test', 2000), true)
+  assert.equal(
+    index.inboxVideoCooling(
+      { inboxVideos: { BV1test: 1000 } },
+      'BV1test',
+      1000 + index.INBOX_VIDEO_COOLDOWN_MS,
+    ),
+    false,
+  )
   assert.equal(
     index.inboxItemsFrom(
       [{ id: 1, item: { business_id: 1, subject_id: 1, source_id: 2 } }],
