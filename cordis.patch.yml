@@ -14,6 +14,9 @@
         ownerName: ''
         intervalMinutes: 90
         maxVideosPerRun: 5
+        browseStart: ''
+        browseEnd: ''
+        dailyVideoLimit: 20
         interestKeywords: []
         interestCategories: []
         commentMode: 'off'
@@ -27,10 +30,6 @@
         mentionWhitelist: []
         replyOthers: false
         nestedReplies: false
-        privatePush: false
-        privateTarget: ''
-        biliDmPush: false
-        biliDmTarget: ''
         llmMode: 'dsh'
         llmBaseUrl: 'https://api.deepseek.com'
         llmModel: 'deepseek-chat'

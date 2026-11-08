@@ -8,7 +8,6 @@ Foxy 的 B 站子插件：它自己刷视频、读字幕、决定要不要评论
 
 - 必需：`dsh-foxy`。
 - 记忆：`dsh-foxy-memory`；跨平台落库时可连接 `koishi-plugin-chatluna-foxy-memory`。
-- QQ/B站私聊：QQ 私聊仍走 Koishi 侧 HTTP；旧 `koishi-plugin-foxy-memory-bridge` 仅保留迁移兼容。
 
 ## 它做什么
 
@@ -21,8 +20,7 @@ Foxy 的 B 站子插件：它自己刷视频、读字幕、决定要不要评论
 - 只有 `commentMode: auto` 且当天配额未用完时才发评论；
 - 主动评论正文会按配置带 `@昵称`；回复别人时 B 站已经显示回复关系，正文不再重复加 `@`；
 - 同一个视频 24 小时内只自动回复一次，避免一条视频下被多条 @ 通知刷出多条回复；
-- 有趣的视频会写入 Foxy 记忆 provider（默认 `foxyMemory`，`scene: bilibili`）；
-- 可选通过 Koishi 的 `foxy-memory-bridge` 发 QQ 私聊，或直接用当前 B 站账号发站内私聊，并把这条私聊写入 `scene: private` 的记忆。
+- 有趣的视频会写入 Foxy 记忆 provider（默认 `foxyMemory`，`scene: bilibili`）。
 
 **模型永远拿不到 B 站工具、Shell、文件系统。** 它只输出 JSON，网络写入由插件自己做。这样视频标题/字幕里的提示词注入无法越权。
 
@@ -42,9 +40,8 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 
 - **账号与登录**：扫码登录 / 退出登录，显示当前账号；
 - **AI 模型**：跟随 DSH 当前模型，或填 Base URL、模型名、API Key 直连 OpenAI 兼容接口；
-- **浏览模式**：启用自动浏览、浏览间隔、每轮浏览数量、兴趣关键词、兴趣分区、评论模式、每日评论上限；
+- **浏览模式**：启用自动浏览、浏览间隔、每轮浏览数量、每日浏览时段、每日视频上限、兴趣关键词、兴趣分区、评论模式、每日评论上限；
 - **评论功能**：默认提及账号、提及白名单、回复他人评论、楼中楼回复、立即评论一次；
-- **私聊推送**：QQ 私聊 / B站私聊开关与对象；推送内容会同时写入私聊记忆；
 - **评论回复**：检查「回复我的」「@我的」，查看原视频后回复；可配置间隔和每轮最多回复；
 - **运行与日志**：立即运行、立即检查评论通知、保存设置、上轮统计与逐条浏览记录；
 - **记忆与启动**：写入 Foxy 记忆、启动 DSH 后自动运行；
@@ -89,8 +86,11 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 | `presetId` | `preset` | 读取的人设 |
 | `presetPath` | 空 | 可选，直接指定 preset.yml |
 | `customPrompt` | 空 | 追加到内置判断提示词后的自定义要求；留空使用内置 |
-| `intervalMinutes` | `90` | 扫描间隔，10–1440 |
+| `intervalMinutes` | `90` | 自动检查间隔，10–1440 |
 | `maxVideosPerRun` | `5` | 每次最多看几条，1–20 |
+| `browseStart` | 空 | 每日浏览开始时间（`HH:MM`）；留空表示全天 |
+| `browseEnd` | 空 | 每日浏览结束时间（`HH:MM`）；支持跨午夜 |
+| `dailyVideoLimit` | `20` | 每日累计浏览视频上限，0–100；0 表示不自动浏览 |
 | `interestKeywords` | `[]` | 标题/简介命中任一关键词才浏览；空数组不筛选 |
 | `interestCategories` | `[]` | 只浏览命中的分区（`tname`）；空数组不筛选 |
 | `commentMode` | `off` | `off` / `auto` |
@@ -104,10 +104,6 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 | `mentionWhitelist` | `[]` | 允许模型选择 @ 的账号，最多 20 个 |
 | `replyOthers` | `false` | 是否允许回复视频下的一级评论 |
 | `nestedReplies` | `false` | 是否允许回复楼中楼；需先开启 `replyOthers` |
-| `privatePush` | `false` | 是否允许模型把有趣视频通过 QQ 私聊推送 |
-| `privateTarget` | 空 | 私聊 QQ；留空使用桥接配置的 `userId` |
-| `biliDmPush` | `false` | 是否允许模型把有趣视频通过 B站站内私聊推送 |
-| `biliDmTarget` | 空 | B站接收者 UID；留空使用 `ownerUid` |
 | `llmMode` | `dsh` | `dsh` 跟随 DSH；`direct` 直连 API |
 | `llmBaseUrl` | `https://api.deepseek.com` | 直连模式的 OpenAI 兼容地址 |
 | `llmModel` | `deepseek-chat` | 直连模式的模型名 |
@@ -115,17 +111,6 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 | `debug` | `false` | 记录模型决策/记忆写入调试事件，设置页可查看 |
 
 `cookie` 与 `llmApiKey` 只存在于设置文件，设置页只显示「已登录 / 未登录」「已配置 / 未配置」。
-
-### 私聊推送
-
-私聊推送支持两条通道，可以单独开，也可以同时开：
-
-- **QQ 私聊**：需要 Koishi 侧安装 `koishi-plugin-chatluna-foxy-memory`，启用 `foxyApiEnabled` 并配置 `foxyOwnerId`（或请求里带 userId）。插件会读取 `~/.dsh/foxy/settings.json` 的 `bridgeUrl` 和 `bridgeToken`，调用 `POST <bridgeUrl>/send-private`。
-- **B站私聊**：直接使用当前扫码登录的 B 站 Cookie，调用网页私信接口。只有接口返回 `msg_key`（投递回执）才算成功；没有回执通常是对方不收陌生人私信或触发风控。
-
-模型必须同时给出 `dm: true` 和 `dmText`；`skip` 的视频不会推送。发送成功后，插件再写一条 `scene: "private"` 的记忆，内容类似“我在 QQ 私聊/B站私聊里，把刷到的视频发给了主人……”。
-
-默认关闭；建议只对“觉得有意思”的视频开启，避免刷屏。B站私聊要求接收者允许陌生人私信，第一次测试最好用自己的小号或已互关账号。
 
 ## 建议的安全顺序
 
@@ -142,9 +127,9 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 - 字幕接口经常要求登录，读不到字幕时只靠标题/简介判断。
 - 评论是否显示受 B 站审核影响，插件只能提交，不能保证公开可见。
 - 目前只做热门流，不做全站搜索/关注流。
-- 记忆写入走 `dsh-foxy-memory` 的 provider；LivingMemory 桥已支持 `scene: bilibili` 与 `scene: private` 的提示词。
+- 记忆写入走 `dsh-foxy-memory` 的 provider，`scene: bilibili`。
 - `skip` 的视频不写记忆；评论、手动评论和评论回复会写一条对应记忆。若写入失败，设置页“调试”会显示原因。
-- B站站内私信要求对方允许陌生人私信；没有 `msg_key` 回执时插件会报失败，不会把“已提交”当成“已送达”。
+- 每日浏览上限按本机本地日期统计；手动「立即运行」不受时段/上限拦截，便于调试。
 
 ## 开发
 
@@ -157,3 +142,4 @@ node test/test-bili.cjs
 ## License
 
 MIT
+

@@ -43,10 +43,9 @@ async function main() {
     ],
     replyOthers: true,
     nestedReplies: true,
-    privatePush: true,
-    privateTarget: ' 10001 ',
-    biliDmPush: true,
-    biliDmTarget: ' 20002 ',
+    browseStart: ' 9:05 ',
+    browseEnd: ' 25:00 ',
+    dailyVideoLimit: 500,
     llmMode: 'direct',
     llmBaseUrl: ' https://api.example.com/v1 ',
     llmModel: ' test-model ',
@@ -68,10 +67,9 @@ async function main() {
   ])
   assert.equal(normalized.replyOthers, true)
   assert.equal(normalized.nestedReplies, true)
-  assert.equal(normalized.privatePush, true)
-  assert.equal(normalized.privateTarget, '10001')
-  assert.equal(normalized.biliDmPush, true)
-  assert.equal(normalized.biliDmTarget, '20002')
+  assert.equal(normalized.browseStart, '09:05')
+  assert.equal(normalized.browseEnd, '')
+  assert.equal(normalized.dailyVideoLimit, 100)
   assert.equal(normalized.llmMode, 'direct')
   assert.equal(normalized.llmBaseUrl, 'https://api.example.com/v1')
   assert.equal(normalized.llmModel, 'test-model')
@@ -105,6 +103,10 @@ async function main() {
   assert.equal(clearedKey.llmApiKey, '')
   assert.deepEqual(settings.DEFAULTS.mentionWhitelist, [])
   assert.equal(settings.DEFAULTS.ownerName, '')
+  assert.equal(index.inBrowseWindow({ browseStart: '09:00', browseEnd: '12:00' }, new Date('2026-01-01T10:00:00')), true)
+  assert.equal(index.inBrowseWindow({ browseStart: '09:00', browseEnd: '12:00' }, new Date('2026-01-01T13:00:00')), false)
+  assert.equal(index.inBrowseWindow({ browseStart: '22:00', browseEnd: '02:00' }, new Date('2026-01-01T23:30:00')), true)
+  assert.equal(index.inBrowseWindow({ browseStart: '22:00', browseEnd: '02:00' }, new Date('2026-01-01T03:00:00')), false)
   const publicSettings = settings.publicSettings({ ...normalized, cookie: 'SESSDATA=secret' })
   assert.equal(publicSettings.cookie, undefined)
   assert.equal(publicSettings.cookieSet, true)
@@ -176,36 +178,8 @@ async function main() {
     1,
   )
 
-  const previousFetch = global.fetch
-  let dmRequest
-  global.fetch = async (url, init) => {
-    dmRequest = { url, init }
-    return new Response(JSON.stringify({ code: 0, data: { msg_key: 'dm-key-1' } }), {
-      status: 200,
-      headers: { 'content-type': 'application/json' },
-    })
-  }
-  const dm = await bili.sendDm({ toUid: '20002', text: '给你看个视频', config: { cookie } })
-  assert.equal(dm.msgKey, 'dm-key-1')
-  assert.match(dmRequest.url, /web_im\/v1\/web_im\/send_msg/)
-  const dmForm = new URLSearchParams(dmRequest.init.body)
-  assert.equal(dmForm.get('msg[sender_uid]'), '82588812')
-  assert.equal(dmForm.get('msg[receiver_id]'), '20002')
-  assert.equal(dmForm.get('msg[msg_type]'), '1')
-  assert.equal(dmForm.get('csrf'), 'xyz')
-  assert.match(dmForm.get('msg[content]'), /给你看个视频/)
-
-  global.fetch = async () =>
-    new Response(JSON.stringify({ code: 0, data: {} }), {
-      status: 200,
-      headers: { 'content-type': 'application/json' },
-    })
-  await assert.rejects(
-    () => bili.sendDm({ toUid: '20002', text: '给你看个视频', config: { cookie } }),
-    /msg_key/,
-  )
-
   let commentRequest
+  const previousFetch = global.fetch
   global.fetch = async (url, init) => {
     commentRequest = { url, init }
     return new Response(JSON.stringify({ code: 0, data: { rpid: 1 } }), {
@@ -431,30 +405,6 @@ async function main() {
   assert.equal(prose.action, 'comment')
   assert.match(prose.comment, /记一下/)
 
-  responses = ['{"action":"remember","memory":"记一下","dm":true,"dmText":"这个我也想发给你看看。"}']
-  responseIndex = -1
-  const privateDecision = await judge.judgeVideo(fakeCtx, {}, {
-    item: { bvid: 'BV1xx', title: '测试视频' },
-    summary: '标题：测试视频',
-    subtitleText: '',
-    commentsText: '',
-    mayComment: false,
-    privatePush: true,
-  })
-  assert.equal(privateDecision.dm, true)
-  assert.match(privateDecision.dmText, /发给你/)
-
-  const privateOff = await judge.judgeVideo(fakeCtx, {}, {
-    item: { bvid: 'BV1xx', title: '测试视频' },
-    summary: '标题：测试视频',
-    subtitleText: '',
-    commentsText: '',
-    mayComment: false,
-    privatePush: false,
-  })
-  assert.equal(privateOff.dm, false)
-  assert.equal(privateOff.dmText, '')
-
   console.log('foxy-bili tests passed')
 }
 
@@ -462,3 +412,4 @@ main().catch((error) => {
   console.error(error)
   process.exit(1)
 })
+
