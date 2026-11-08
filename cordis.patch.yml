@@ -34,5 +34,6 @@
         llmMode: 'dsh'
         llmBaseUrl: 'https://api.deepseek.com'
         llmModel: 'deepseek-chat'
+        customPrompt: ''
         runOnStart: false
         debug: false

@@ -1,8 +1,8 @@
 # dsh-foxy-bili
 
-Foxy 的 B 站子插件：它自己刷视频、读字幕、决定要不要评论/记下来，评论与记忆都经过 **foxy3 人设**。
+Foxy 的 B 站子插件：它自己刷视频、读字幕、决定要不要评论/记下来，评论与记忆都经过**预设人设**。
 
-> 这是一个 **DSH 插件**，不是 Koishi 插件。它依赖 `dsh-foxy`（人设/扩展契约）和可选的 `dsh-foxy-memory`（记忆）。
+> 运行于 DSH。它依赖 `dsh-foxy`（人设/扩展契约）和可选的 `dsh-foxy-memory`（记忆）。
 
 ## 依赖关系
 
@@ -86,8 +86,9 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 | `enabled` | `false` | 总开关 |
 | `ownerUid` | 空 | 被 @ 的 UID，传给 B 站 at 接口 |
 | `ownerName` | 空 | 评论正文里的 `@昵称` |
-| `presetId` | `foxy3` | 读取的人设 |
-| `presetPath` | 空 | 可选，直接指定 foxy3.yml |
+| `presetId` | `preset` | 读取的人设 |
+| `presetPath` | 空 | 可选，直接指定 preset.yml |
+| `customPrompt` | 空 | 追加到内置判断提示词后的自定义要求；留空使用内置 |
 | `intervalMinutes` | `90` | 扫描间隔，10–1440 |
 | `maxVideosPerRun` | `5` | 每次最多看几条，1–20 |
 | `interestKeywords` | `[]` | 标题/简介命中任一关键词才浏览；空数组不筛选 |
@@ -98,7 +99,7 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 | `replyIntervalMinutes` | `10` | 通知检查间隔，2–1440 分钟 |
 | `maxRepliesPerRun` | `1` | 每轮最多回复几条，1–5 |
 | `enableMemory` | `true` | 是否写 Foxy 记忆 |
-| `memoryPresetId` | `foxy3（Character）` | 记忆池 |
+| `memoryPresetId` | `preset（Character）` | 记忆池 |
 | `mentionOwner` | `true` | 评论是否默认 @ 主人 |
 | `mentionWhitelist` | `[]` | 允许模型选择 @ 的账号，最多 20 个 |
 | `replyOthers` | `false` | 是否允许回复视频下的一级评论 |
