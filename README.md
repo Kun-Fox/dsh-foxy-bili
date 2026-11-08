@@ -4,6 +4,12 @@ Foxy 的 B 站子插件：它自己刷视频、读字幕、决定要不要评论
 
 > 这是一个 **DSH 插件**，不是 Koishi 插件。它依赖 `dsh-foxy`（人设/扩展契约）和可选的 `dsh-foxy-memory`（记忆）。
 
+## 依赖关系
+
+- 必需：`dsh-foxy`。
+- 记忆：`dsh-foxy-memory`；跨平台落库时可连接 `koishi-plugin-chatluna-foxy-memory`。
+- QQ/B站私聊：QQ 私聊仍走 Koishi 侧 HTTP；旧 `koishi-plugin-foxy-memory-bridge` 仅保留迁移兼容。
+
 ## 它做什么
 
 - 定时从 B 站热门里取几条视频（不做全站爬取）；
