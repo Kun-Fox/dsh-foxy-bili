@@ -85,7 +85,8 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 | `ownerName` | 空 | 评论正文里的 `@昵称` |
 | `presetId` | `preset` | 读取的人设 |
 | `presetPath` | 空 | 可选，直接指定 preset.yml |
-| `customPrompt` | 空 | 追加到内置判断提示词后的自定义要求；留空使用内置 |
+| `basePrompt` | 内置原文 | 判断提示词原文，可直接编辑；JSON 输出格式由插件追加 |
+| `customPrompt` | 空 | 追加到原版判断提示词后的自定义要求；留空则不追加 |
 | `intervalMinutes` | `90` | 自动检查间隔，10–1440 |
 | `maxVideosPerRun` | `5` | 每次最多看几条，1–20 |
 | `browseStart` | 空 | 每日浏览开始时间（`HH:MM`）；留空表示全天 |

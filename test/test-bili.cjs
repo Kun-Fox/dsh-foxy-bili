@@ -25,6 +25,40 @@ async function main() {
   assert.match(summary, /BV：BV1xx/)
   assert.match(summary, /时长：2 分钟/)
 
+  const mergedInbox = index.inboxItemsFrom(
+    [
+      {
+        id: 1,
+        user: { mid: 9, nickname: 'kunfox' },
+        reply_time: 100,
+        item: {
+          business_id: 1,
+          subject_id: 117565317715732,
+          root_id: 323281968416,
+          source_id: 323283075440,
+          target_id: 319529153777,
+          source_content: '同一评论',
+        },
+      },
+    ],
+    [
+      {
+        id: 2,
+        user: { mid: 9, nickname: 'kunfox' },
+        reply_time: 101,
+        item: {
+          business_id: 1,
+          subject_id: 117565317715732,
+          root_id: 0,
+          source_id: 323281968416,
+          source_content: '同一评论',
+        },
+      },
+    ],
+  )
+  assert.equal(mergedInbox.length, 1)
+  assert.equal(mergedInbox[0].key, 'rpid:323281968416')
+
   const persona = judge.readFoxyPersona({})
   assert.ok(persona.length > 100, 'foxy3 persona should be readable')
   assert.match(persona, /Foxy|狐狸|kunfox/)
