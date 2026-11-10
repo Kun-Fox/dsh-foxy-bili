@@ -80,6 +80,8 @@ async function main() {
     browseStart: ' 9:05 ',
     browseEnd: ' 25:00 ',
     dailyVideoLimit: 500,
+    feedSource: 'ranking',
+    searchKeywords: ' 大狗, 纪录片，大狗\n',
     llmMode: 'direct',
     llmBaseUrl: ' https://api.example.com/v1 ',
     llmModel: ' test-model ',
@@ -110,6 +112,8 @@ async function main() {
   assert.equal(normalized.llmApiKey, 'sk-secret')
   assert.deepEqual(normalized.interestKeywords, ['编程', '游戏'])
   assert.deepEqual(normalized.interestCategories, ['科技'])
+  assert.equal(normalized.feedSource, 'ranking')
+  assert.deepEqual(normalized.searchKeywords, ['大狗', '纪录片'])
   assert.equal(normalized.replyInbox, false)
   assert.equal(normalized.replyIntervalMinutes, 2)
   assert.equal(normalized.maxRepliesPerRun, 5)
@@ -224,12 +228,43 @@ async function main() {
   await bili.postComment({
     aid: 123,
     message: '@测试账号 这个视频有意思',
-    atMids: ['82588812'],
+    atMentions: [{ name: '测试账号', uid: '82588812' }],
     config: { cookie },
   })
   const commentForm = new URLSearchParams(commentRequest.init.body)
   assert.equal(commentForm.get('message'), '@测试账号 这个视频有意思')
-  assert.equal(commentForm.has('at_name_to_mid'), false)
+  assert.equal(commentForm.get('at_name_to_mid'), '{"测试账号":82588812}')
+  global.fetch = previousFetch
+
+  let feedRequests = []
+  global.fetch = async (url) => {
+    feedRequests.push(String(url))
+    let data
+    if (String(url).includes('/popular')) {
+      data = { list: [{ bvid: 'BVpopular' }, { bvid: 'BVshared' }] }
+    } else if (String(url).includes('/ranking')) {
+      data = { list: [{ bvid: 'BVshared' }, { bvid: 'BVranking' }] }
+    } else if (String(url).includes('/feed/rcmd')) {
+      data = { item: [{ bvid: 'BVrecommend' }, { bvid: 'BVshared' }] }
+    } else if (String(url).includes('/search/type')) {
+      data = { result: [{ bvid: 'BVsearch', title: '<em>测试</em>视频' }] }
+    }
+    return new Response(JSON.stringify({ code: 0, data }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })
+  }
+  const mixedFeed = await index.fetchFeed(
+    { feedSource: 'mixed', searchKeywords: ['测试'] },
+    5,
+  )
+  assert.deepEqual(
+    mixedFeed.map((item) => item.bvid),
+    ['BVpopular', 'BVshared', 'BVrecommend', 'BVsearch', 'BVranking'],
+  )
+  assert.equal(mixedFeed.find((item) => item.bvid === 'BVsearch').title, '测试视频')
+  assert.equal(feedRequests.some((url) => url.includes('/ranking')), true)
+  assert.equal(feedRequests.some((url) => url.includes('/search/type')), true)
   global.fetch = previousFetch
 
   const jar = login.pickCredentials([
