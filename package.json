@@ -1,6 +1,6 @@
 {
   "name": "dsh-foxy-bili",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Foxy 的 B 站子插件：自己刷视频、读字幕、决定要不要评论/记住，并通过 foxy3 人设与 memory 说话。",
   "type": "module",
   "main": "lib/index.js",

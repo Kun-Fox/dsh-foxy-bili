@@ -41,16 +41,18 @@ async function main() {
     },
   }
   clientModule.apply(ctx)
-  assert.equal(registered.length, 3)
+  assert.equal(registered.length, 2)
   assert.deepEqual(
     registered.map((x) => x.name),
-    ['main', 'sidebar.panellist', 'settings.section'],
+    ['main', 'settings.section'],
   )
   assert.equal(registered[0].key, 'dsh-foxy-bili')
-  assert.equal(registered[1].id, 'dsh-foxy-bili')
-  assert.equal(registered[1].label(), 'Foxy-bili')
-  assert.equal(registered[2].id, 'foxy-bili')
-  assert.equal(registered[2].label, 'Foxy-bili')
+  assert.equal(registered[1].id, 'foxy-bili')
+  assert.equal(registered[1].label, 'Foxy-bili')
+  const page = globalThis.window.__FOXY_CONSOLE__.pages.find((item) => item.id === 'dsh-foxy-bili')
+  assert.ok(page)
+  assert.equal(page.label, 'B站')
+  assert.equal(page.order, 13)
 
   console.log('foxy-bili client tests passed')
 }
