@@ -18,7 +18,7 @@ Foxy 的 B 站子插件：它自己刷视频、读字幕、决定要不要评论
   - `remember`：有点意思但不必公开评论，记一笔；
   - `comment`：值得在评论区说一句。
 - 只有 `commentMode: auto` 且当天配额未用完时才发评论；
-- 主动评论正文会按配置带 `@昵称`，并同时向 B 站提交 `at_name_to_mid`（JSON 映射），这才是真正会触发 @ 通知的提及；回复别人时 B 站已经显示回复关系，正文不再重复加 `@`；
+- 主动评论正文会带默认账号及白名单里的全部 `@昵称`，并同时向 B 站提交 `at_name_to_mid`（JSON 映射），这才是真正会触发 @ 通知的提及；回复别人时 B 站已经显示回复关系，正文不再重复加 `@`；
 - 同一个视频 24 小时内只自动回复一次，避免一条视频下被多条 @ 通知刷出多条回复；
 - 有趣的视频会写入 Foxy 记忆 provider（默认 `foxyMemory`，`scene: bilibili`）。
 
@@ -103,8 +103,8 @@ dsh plugin --profile desktop add file:D:\Documents\deepseek-harness\default-work
 | `maxRepliesPerRun` | `1` | 每轮最多回复几条，1–5 |
 | `enableMemory` | `true` | 是否写 Foxy 记忆 |
 | `memoryPresetId` | `preset（Character）` | 记忆池 |
-| `mentionOwner` | `true` | 评论是否默认 @ 主人 |
-| `mentionWhitelist` | `[]` | 允许模型选择 @ 的账号，最多 20 个 |
+| `mentionOwner` | `true` | 每次评论是否自动 @ 主人 |
+| `mentionWhitelist` | `[]` | 除主人外，每次评论还会 @ 的账号，最多 20 个；填 UID 才会真正通知 |
 | `replyOthers` | `false` | 是否允许回复视频下的一级评论 |
 | `nestedReplies` | `false` | 是否允许回复楼中楼；需先开启 `replyOthers` |
 | `llmMode` | `dsh` | `dsh` 跟随 DSH；`direct` 直连 API |

@@ -236,6 +236,78 @@ async function main() {
   assert.equal(commentForm.get('at_name_to_mid'), '{"测试账号":82588812}')
   global.fetch = previousFetch
 
+  // 默认账号 + 白名单必须每次都被 @（模型 mentions 为空时也是），
+  // 且正文前缀与 at_name_to_mid 的 key 一一对应。
+  const mentionConfig = {
+    mentionOwner: true,
+    ownerName: 'kunfox-',
+    ownerUid: '82588812',
+    mentionWhitelist: [{ name: '会爆炸的龙王', uid: '407526919' }],
+    cookie,
+  }
+  const built = index.buildCommentMessage(mentionConfig, {
+    comment: '@会爆炸的龙王 这个视频有意思',
+    mentions: [],
+  })
+  assert.equal(built.message, '@kunfox- @会爆炸的龙王 这个视频有意思')
+  assert.deepEqual(
+    built.mentions.map((item) => `${item.name}:${item.uid}`),
+    ['kunfox-:82588812', '会爆炸的龙王:407526919'],
+  )
+
+  // 模型只挑白名单（还带 @ 前缀）时，不能把默认账号挤掉，也不能重复。
+  const picked = index.buildCommentMessage(mentionConfig, {
+    comment: '正文',
+    mentions: ['@会爆炸的龙王', '407526919'],
+  })
+  assert.deepEqual(
+    picked.mentions.map((item) => item.name),
+    ['kunfox-', '会爆炸的龙王'],
+  )
+
+  // mentionOwner 关闭时不再强制主人，白名单仍然生效。
+  const noOwner = index.buildCommentMessage(
+    { ...mentionConfig, mentionOwner: false },
+    { comment: '正文', mentions: ['kunfox-'] },
+  )
+  assert.deepEqual(noOwner.mentions.map((item) => item.name), ['会爆炸的龙王'])
+  assert.equal(noOwner.message, '@会爆炸的龙王 正文')
+
+  // 只有 UID 的白名单条目拼不出 @昵称，不能生成空的 @。
+  const uidOnly = index.buildCommentMessage(
+    {
+      mentionOwner: false,
+      ownerName: '',
+      ownerUid: '',
+      mentionWhitelist: [{ name: '', uid: '200' }],
+    },
+    { comment: '正文', mentions: [] },
+  )
+  assert.deepEqual(uidOnly.mentions, [])
+  assert.equal(uidOnly.message, '正文')
+
+  // 主人和白名单对象都要进入 at_name_to_mid。
+  global.fetch = async (url, init) => {
+    commentRequest = { url, init }
+    return new Response(JSON.stringify({ code: 0, data: { rpid: 2 } }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })
+  }
+  await bili.postComment({
+    aid: 456,
+    message: built.message,
+    atMentions: built.mentions,
+    config: { cookie },
+  })
+  const mentionForm = new URLSearchParams(commentRequest.init.body)
+  assert.equal(mentionForm.get('message'), '@kunfox- @会爆炸的龙王 这个视频有意思')
+  assert.deepEqual(JSON.parse(mentionForm.get('at_name_to_mid')), {
+    'kunfox-': 82588812,
+    '会爆炸的龙王': 407526919,
+  })
+  global.fetch = previousFetch
+
   let feedRequests = []
   global.fetch = async (url) => {
     feedRequests.push(String(url))
